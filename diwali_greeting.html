@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>शुभ दीपावली ✨ Interactive Diwali Greeting</title>
+    <!-- Google Fonts with graceful fallback to system fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Great+Vibes&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold-light: #fff3b0;
+            --gold-mid: #ffd700;
+            --gold-dark: #c58f00;
+            --red-deep: #4a0404;
+            --red-mid: #7a0916;
+            --red-bright: #b81428;
+            --cream-bg: #f5ebd6;
+            --brown-dark: #2b1608;
+            --purple-dark: #120524;
+            --purple-mid: #240b36;
+            --font-main: 'Baloo 2', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-hindi: 'Tiro Devanagari Hindi', 'Baloo 2', Georgia, serif;
+            --font-script: 'Great Vibes', Georgia, cursive;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: var(--font-main);
+            background-color: var(--purple-dark);
+            color: #ffffff;
+            position: relative;
+            touch-action: manipulation;
+        }
+
+        /* Screen Flash Overlay for Firework Explosion */
+        #screenFlash {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle, rgba(255,250,220,0.85) 0%, rgba(255,215,0,0.4) 60%, transparent 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 45;
+            transition: opacity 0.15s ease-out;
+        }
+
+        /* Floating Audio Button */
+        #audioToggle {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 60;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(20, 5, 10, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(255, 215, 0, 0.65);
+            color: var(--gold-mid);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            transition: transform 0.2s ease, background 0.3s ease, box-shadow 0.3s ease;
+        }
+        #audioToggle:active {
+            transform: scale(0.9);
+        }
+        #audioToggle.playing {
+            background: linear-gradient(135deg, #ffd700, #d48800);
+            color: #3a0007;
+            box-shadow: 0 0 22px rgba(255, 215, 0, 0.85);
+        }
+
+        /* Toast Notification */
+        #toastMsg {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(18, 5, 36, 0.92);
+            border: 1px solid var(--gold-mid);
+            color: var(--gold-light);
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            white-space: nowrap;
+        }
+        #toastMsg.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Background Fireworks Canvas */
+        #fireworksCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        /* Base Screen Styles & Transitions */
+        .screen {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 16px;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.94);
+            transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                        background 1.2s ease;
+            z-index: 10;
+            overflow: hidden;
+        }
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+            z-index: 20;
+        }
+        .screen.exit {
+            opacity: 0;
+            transform: scale(1.06);
+            pointer-events: none;
+        }
+
+        /* Common Typography & Gold Effects */
+        .gold-text {
+            background: linear-gradient(180deg, #fffbe0 0%, #ffd700 48%, #e09f00 85%, #fff3b0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: #ffd700;
+            filter: drop-shadow(0 3px 10px rgba(255, 190, 0, 0.35));
+        }
+
+        .hindi-heading {
+            font-family: var(--font-hindi);
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: 0.02em;
+        }
+
+        /* Golden Glowing Buttons */
+        .gold-btn {
+            appearance: none;
+            border: 2px solid #fff2b2;
+            background: linear-gradient(135deg, #f59e0b 0%, #ffd700 50%, #d97706 100%);
+            color: #3b0404;
+            font-family: var(--font-main);
+            font-weight: 800;
+            font-size: 1.08rem;
+            padding: 13px 30px;
+            border-radius: 999px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 0 22px rgba(255, 215, 0, 0.65), inset 0 2px 4px rgba(255, 255, 255, 0.7);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: glowPulse 2.4s infinite ease-in-out;
+            text-decoration: none;
+        }
+        .gold-btn:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 0 32px rgba(255, 215, 0, 0.9), inset 0 2px 6px rgba(255, 255, 255, 0.9);
+        }
+        .gold-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Keyframe Animations */
+        @keyframes glowPulse {
+            0%, 100% {
+                box-shadow: 0 0 16px rgba(255, 215, 0, 0.55), 0 0 30px rgba(245, 158, 11, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 28px rgba(255, 215, 0, 0.95), 0 0 50px rgba(245, 158, 11, 0.55);
+            }
+        }
+
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes rotateSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes twinkleBulb {
+            0%, 100% { opacity: 0.35; transform: scale(0.85); filter: brightness(0.9); }
+            50% { opacity: 1; transform: scale(1.22); filter: brightness(1.35); }
+        }
+
+        @keyframes flameFlicker {
+            0%   { transform: translateX(-50%) scale(1, 1) rotate(-1.5deg); }
+            25%  { transform: translateX(-50%) scale(0.95, 1.07) rotate(1.5deg); }
+            50%  { transform: translateX(-50%) scale(1.04, 0.96) rotate(-1deg); }
+            75%  { transform: translateX(-50%) scale(0.97, 1.05) rotate(2deg); }
+            100% { transform: translateX(-50%) scale(1.02, 1.01) rotate(-0.5deg); }
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.5) translateY(15px); }
+            70% { opacity: 1; transform: scale(1.06) translateY(-2px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes crackerShake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            15% { transform: translate(-4px, 1px) rotate(-2.5deg); }
+            30% { transform: translate(4px, -1px) rotate(2.5deg); }
+            45% { transform: translate(-5px, 0px) rotate(-3deg); }
+            60% { transform: translate(5px, 1px) rotate(3deg); }
+            75% { transform: translate(-3px, -1px) rotate(-2deg); }
+            90% { transform: translate(3px, 0px) rotate(2deg); }
+        }
+
+        /* ==========================================
+           SCREEN 1: WELCOME / INTRO
+           ========================================== */
+        #screen1 {
+            background: radial-gradient(circle at 50% 42%, #9e1122 0%, #5c060c 52%, #290104 100%);
+            justify-content: center;
+        }
+
+        /* Golden Mandala Pattern Border */
+        .mandala-frame {
+            position: relative;
+            width: 100%;
+            max-width: 430px;
+            height: 100%;
+            max-height: 760px;
+            border: 2px solid rgba(255, 215, 0, 0.65);
+            border-radius: 28px;
+            box-shadow: inset 0 0 35px rgba(255, 215, 0, 0.22), 0 12px 45px rgba(0, 0, 0, 0.65);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 36px 24px 32px;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 30%, rgba(255, 195, 0, 0.08), transparent 70%);
+        }
+        .mandala-frame::before {
+            content: "";
+            position: absolute;
+            inset: 7px;
+            border: 1px dashed rgba(255, 215, 0, 0.45);
+            border-radius: 22px;
+            pointer-events: none;
+        }
+
+        /* Rotating Center/Corner SVG Mandalas */
+        .bg-mandala-svg {
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            top: 50%;
+            left: 50%;
+            margin-top: -170px;
+            margin-left: -170px;
+            opacity: 0.14;
+            pointer-events: none;
+            animation: rotateSlow 48s linear infinite;
+        }
+
+        .corner-ornament {
+            position: absolute;
+            width: 56px;
+            height: 56px;
+            pointer-events: none;
+            opacity: 0.85;
+        }
+        .corner-tl { top: 10px; left: 10px; }
+        .corner-tr { top: 10px; right: 10px; transform: scaleX(-1); }
+        .corner-bl { bottom: 10px; left: 10px; transform: scaleY(-1); }
+        .corner-br { bottom: 10px; right: 10px; transform: scale(-1, -1); }
+
+        /* Twinkling Fairy Lights on Left & Right Edges */
+        .fairy-string {
+            position: absolute;
+            top: 24px;
+            bottom: 24px;
+            width: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .fairy-string.left { left: 10px; }
+        .fairy-string.right { right: 10px; }
+        .fairy-string::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1.5px;
+            background: linear-gradient(to bottom, transparent, rgba(255,215,0,0.45), transparent);
+        }
+        .fairy-bulb {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #fff4b8;
+            box-shadow: 0 0 10px 3px #ffd700, 0 0 18px 5px #ff7b00;
+            animation: twinkleBulb 2.2s infinite ease-in-out;
+        }
+        .fairy-bulb:nth-child(odd) {
+            background: #ffd1dc;
+            box-shadow: 0 0 10px 3px #ff4d79, 0 0 18px 5px #ff9900;
+            animation-duration: 1.8s;
+        }
+        .fairy-bulb:nth-child(3n) {
+            animation-delay: 0.7s;
+        }
+        .fairy-bulb:nth-child(2n) {
+            animation-delay: 1.2s;
+        }
+
+        .s1-top-badge {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            color: var(--gold-light);
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+
+        .s1-main-title {
+            font-size: clamp(2.6rem, 9vw, 3.8rem);
+            text-align: center;
+            margin: 4px 0;
+            animation: floatSlow 3.5s ease-in-out infinite;
+        }
+
+        .jagmag-box {
+            background: linear-gradient(135deg, #ffe066 0%, #ffd700 45%, #e69b00 100%);
+            border: 3px solid #8c0712;
+            outline: 2px solid #ffd700;
+            border-radius: 18px;
+            padding: 14px 28px;
+            margin: 14px auto;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), 0 0 24px rgba(255, 215, 0, 0.55);
+            text-align: center;
+            transform: translateZ(0);
+        }
+        .jagmag-box h2 {
+            font-family: var(--font-hindi);
+            font-size: clamp(1.55rem, 6vw, 2.1rem);
+            color: #69030c;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .s1-subtext {
+            font-family: var(--font-hindi);
+            font-size: clamp(0.98rem, 3.8vw, 1.15rem);
+            color: #ffefc2;
+            text-align: center;
+            max-width: 290px;
+            line-height: 1.55;
+            margin-top: 10px;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65);
+        }
+
+        /* ==========================================
+           SCREEN 2: LIGHT THE DIYA
+           ========================================== */
+        #screen2 {
+            background-color: var(--cream-bg);
+            background-image: radial-gradient(circle at 50% 45%, rgba(255, 236, 179, 0.6), rgba(235, 218, 185, 0.95));
+            color: #4a2508;
+            justify-content: center;
+            transition: background-color 1.4s ease, background-image 1.4s ease, color 1.2s ease;
+        }
+        #screen2.lit-theme {
+            background-color: var(--brown-dark);
+            background-image: radial-gradient(circle at 50% 48%, rgba(168, 86, 18, 0.45) 0%, #2b1608 65%, #170a03 100%);
+            color: #ffecb3;
+        }
+
+        .temple-arch-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 390px;
+            height: 100%;
+            max-height: 700px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 12px;
+        }
+
+        .temple-arch {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            max-height: 460px;
+            margin: 10px 0;
+            background: rgba(255, 248, 231, 0.72);
+            border: 4px solid #c98a2c;
+            border-radius: 190px 190px 26px 26px;
+            box-shadow: 0 12px 35px rgba(92, 48, 10, 0.16), inset 0 0 28px rgba(201, 138, 44, 0.22);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 34px 16px 28px;
+            transition: background 1.3s ease, border-color 1.3s ease, box-shadow 1.3s ease;
+            overflow: hidden;
+        }
+        #screen2.lit-theme .temple-arch {
+            background: radial-gradient(circle at 50% 56%, rgba(255, 166, 0, 0.28) 0%, rgba(56, 26, 7, 0.92) 75%);
+            border-color: #ffd700;
+            box-shadow: 0 0 50px rgba(255, 174, 0, 0.45), inset 0 0 45px rgba(255, 196, 0, 0.3);
+        }
+
+        /* Inner decorative arch border */
+        .temple-arch::before {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border: 1.5px dashed rgba(201, 138, 44, 0.55);
+            border-radius: 182px 182px 20px 20px;
+            pointer-events: none;
+        }
+
+        /* Hanging Temple Bell / Kalash Motif at Arch Crown */
+        .temple-kalash {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffd700, #b87300);
+            color: #4a1c00;
+            font-weight: 800;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            border: 2px solid #fff3b0;
+            z-index: 2;
+        }
+
+        /* Diyas Row inside Temple Frame */
+        .diyas-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 18px;
+            width: 100%;
+            padding: 20px 4px 10px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .diya-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.25s ease;
+            padding: 6px;
+        }
+        .diya-unit:hover {
+            transform: scale(1.06);
+        }
+        .diya-unit:active {
+            transform: scale(0.95);
+        }
+
+        /* Flame wrapper above Diya */
+        .flame-wrap {
+            position: relative;
+            width: 36px;
+            height: 52px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: -6px;
+            pointer-events: none;
+        }
+        .diya-unit.small .flame-wrap {
+            width: 28px;
+            height: 40px;
+        }
+
+        /* Realistic layered CSS Flame */
+        .diya-flame {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            width: 22px;
+            height: 38px;
+            transform: translateX(-50%) scale(0);
+            background: radial-gradient(ellipse at 50% 80%, #ffffff 10%, #ffee55 38%, #ff8800 72%, rgba(255, 60, 0, 0) 100%);
+            border-radius: 50% 50% 35% 35% / 65% 65% 35% 35%;
+            box-shadow: 0 0 18px 6px rgba(255, 180, 0, 0.8), 0 0 38px 14px rgba(255, 102, 0, 0.45);
+            opacity: 0;
+            transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: 50% 90%;
+        }
+        .diya-unit.small .diya-flame {
+            width: 16px;
+            height: 28px;
+        }
+        .diya-unit.lit .diya-flame {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+            animation: flameFlicker 0.42s infinite alternate ease-in-out;
+        }
+
+        /* Clay Diya SVG Bowl */
+        .diya-svg {
+            width: 96px;
+            height: 54px;
+            filter: drop-shadow(0 6px 8px rgba(43, 22, 8, 0.35));
+            transition: filter 0.6s ease;
+        }
+        .diya-unit.small .diya-svg {
+            width: 72px;
+            height: 42px;
+        }
+        .diya-unit.lit .diya-svg {
+            filter: drop-shadow(0 6px 16px rgba(255, 165, 0, 0.7));
+        }
+
+        .diya-instruction {
+            font-size: 1.08rem;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 0.02em;
+            z-index: 3;
+            transition: color 0.8s ease;
+        }
+
+        #nextToSkyBtn {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8);
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #nextToSkyBtn.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+            animation: popIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, glowPulse 2.4s infinite ease-in-out 0.6s;
+        }
+
+        /* ==========================================
+           SCREEN 3: BURST THE CRACKER
+           ========================================== */
+        #screen3 {
+            background: linear-gradient(180deg, #0b0217 0%, #190730 55%, #2a0c45 100%);
+            justify-content: space-between;
+            padding-top: 32px;
+            padding-bottom: 32px;
+        }
+
+        .s3-header {
+            text-align: center;
+            z-index: 30;
+        }
+        .double-tap-pill {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 22px;
+            border-radius: 999px;
+            background: rgba(255, 215, 0, 0.14);
+            border: 1.5px solid rgba(255, 215, 0, 0.6);
+            color: var(--gold-light);
+            font-weight: 700;
+            font-size: 1.02rem;
+            box-shadow: 0 0 18px rgba(255, 215, 0, 0.25);
+            animation: glowPulse 2s infinite ease-in-out;
+        }
+
+        /* Rocket Interactive Area */
+        .cracker-stage {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+        }
+
+        .rocket-assembly {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 20px;
+            transition: transform 0.2s ease;
+        }
+        .rocket-assembly.shaking {
+            animation: crackerShake 0.45s infinite linear;
+        }
+        .rocket-assembly.launching .rocket-missile {
+            transform: translateY(-95vh) scale(0.65);
+            opacity: 0;
+            transition: transform 0.78s cubic-bezier(0.5, 0, 0.85, 0.35), opacity 0.25s ease 0.6s;
+        }
+
+        .rocket-missile {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 3;
+        }
+
+        /* Nose Cone */
+        .rocket-cone {
+            width: 0;
+            height: 0;
+            border-left: 26px solid transparent;
+            border-right: 26px solid transparent;
+            border-bottom: 46px solid #ffd700;
+            filter: drop-shadow(0 -3px 10px rgba(255, 215, 0, 0.55));
+            position: relative;
+        }
+        .rocket-cone::after {
+            content: "";
+            position: absolute;
+            top: 14px;
+            left: -18px;
+            width: 0;
+            height: 0;
+            border-left: 18px solid transparent;
+            border-right: 18px solid transparent;
+            border-bottom: 32px solid #e01b24;
+        }
+
+        /* Cylindrical Festive Body */
+        .rocket-body {
+            width: 44px;
+            height: 118px;
+            background: repeating-linear-gradient(
+                135deg,
+                #c91429 0px,
+                #c91429 14px,
+                #ffd700 14px,
+                #ffd700 22px,
+                #8f0819 22px,
+                #8f0819 34px
+            );
+            border: 2px solid #ffe57f;
+            border-radius: 4px;
+            box-shadow: 0 0 22px rgba(224, 27, 36, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .rocket-badge {
+            background: #3d030b;
+            border: 1.5px solid #ffd700;
+            color: #ffd700;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.08em;
+        }
+
+        /* Rocket Fins & Guide Stick */
+        .rocket-fins {
+            width: 68px;
+            height: 18px;
+            background: linear-gradient(90deg, #ffd700, #e65100, #ffd700);
+            clip-path: polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+        }
+
+        /* Fuse & Sparks */
+        .rocket-fuse {
+            width: 4px;
+            height: 28px;
+            background: #d6c5b3;
+            border-radius: 0 0 4px 4px;
+            position: relative;
+        }
+        .fuse-spark {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffffff 0%, #ffff00 45%, #ff5500 80%, transparent 100%);
+            box-shadow: 0 0 20px 8px #ffae00;
+            opacity: 0;
+        }
+        .rocket-assembly.shaking .fuse-spark {
+            opacity: 1;
+            animation: twinkleBulb 0.12s infinite;
+        }
+
+        /* Glass Launch Bottle */
+        .launch-bottle {
+            width: 52px;
+            height: 78px;
+            margin-top: -12px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.16), rgba(255, 215, 0, 0.25), rgba(255,255,255,0.12));
+            border: 2px solid rgba(255, 215, 0, 0.55);
+            border-radius: 16px 16px 8px 8px;
+            position: relative;
+            z-index: 2;
+            box-shadow: inset 0 0 12px rgba(255, 215, 0, 0.35);
+        }
+        .launch-bottle::before {
+            content: "";
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 22px;
+            height: 14px;
+            background: rgba(255, 215, 0, 0.35);
+            border: 2px solid rgba(255, 215, 0, 0.65);
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .tap-hint-sub {
+            font-size: 0.85rem;
+            color: rgba(255, 239, 194, 0.75);
+            text-align: center;
+            z-index: 30;
+        }
+
+        /* ==========================================
+           SCREEN 4: PERSONALIZED WISH CARD
+           ========================================== */
+        #screen4 {
+            background: radial-gradient(circle at 50% 25%, #2a0e4d 0%, #140529 60%, #090114 100%);
+            justify-content: center;
+        }
+
+        .wish-card-container {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            z-index: 35;
+            padding: 8px;
+        }
+
+        .golden-card {
+            position: relative;
+            background: linear-gradient(160deg, rgba(38, 10, 58, 0.92) 0%, rgba(22, 4, 38, 0.96) 100%);
+            border: 2.5px solid #ffd700;
+            border-radius: 26px;
+            padding: 26px 22px;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.35), inset 0 0 28px rgba(255, 215, 0, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        /* Envelope Top Flap Animation on Final Wish Reveal */
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: linear-gradient(180deg, rgba(255, 215, 0, 0.28), transparent);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            transform-origin: top center;
+            transition: transform 0.8s ease;
+            pointer-events: none;
+        }
+        .golden-card.envelope-open .envelope-flap {
+            transform: rotateX(180deg);
+            opacity: 0.4;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            text-align: left;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            margin-bottom: 5px;
+            letter-spacing: 0.02em;
+        }
+        .festive-input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 14px;
+            border: 1.5px solid rgba(255, 215, 0, 0.55);
+            background: rgba(10, 2, 20, 0.78);
+            color: #ffffff;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        .festive-input::placeholder {
+            color: rgba(255, 235, 190, 0.4);
+        }
+        .festive-input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.45);
+        }
+
+        /* Final Wish Revealed State */
+        #wishFinalState {
+            display: none;
+            text-align: center;
+            animation: popIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        #wishFinalState.active {
+            display: block;
+        }
+        #wishFormState.hidden {
+            display: none;
+        }
+
+        .wish-To-Heading {
+            font-size: clamp(1.75rem, 6.5vw, 2.35rem);
+            margin: 8px 0 10px;
+            word-break: break-word;
+        }
+
+        .gold-divider {
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ffd700, transparent);
+            margin: 10px auto 14px;
+        }
+
+        .wish-body-text {
+            font-size: clamp(0.95rem, 3.6vw, 1.06rem);
+            color: #fff6d6;
+            line-height: 1.6;
+            margin-bottom: 18px;
+            padding: 0 4px;
+        }
+        .sender-signature {
+            display: block;
+            margin-top: 8px;
+            font-weight: 800;
+            color: var(--gold-mid);
+            font-size: 1.08rem;
+        }
+
+        .action-buttons-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .whatsapp-btn {
+            appearance: none;
+            width: 100%;
+            border: 1.5px solid #6ee7b7;
+            background: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+            color: #ffffff;
+            font-family: var(--font-main);
+            font-weight: 800;
+            font-size: 1rem;
+            padding: 12px 20px;
+            border-radius: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 18px rgba(22, 163, 74, 0.5);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .whatsapp-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(22, 163, 74, 0.75);
+        }
+        .whatsapp-btn:active {
+            transform: scale(0.97);
+        }
+
+        .secondary-btn {
+            appearance: none;
+            width: 100%;
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid rgba(255, 215, 0, 0.45);
+            color: var(--gold-light);
+            font-family: var(--font-main);
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .secondary-btn:hover {
+            background: rgba(255, 215, 0, 0.22);
+        }
+        .secondary-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Floating Lit Diyas at Bottom of Screen 4 */
+        .bottom-floating-diyas {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+            margin-top: 14px;
+            z-index: 35;
+        }
+        .mini-float-diya {
+            font-size: 1.65rem;
+            filter: drop-shadow(0 0 12px rgba(255, 180, 0, 0.85));
+            animation: floatSlow 2.6s infinite ease-in-out;
+        }
+        .mini-float-diya:nth-child(2) {
+            font-size: 2rem;
+            animation-delay: 0.4s;
+        }
+        .mini-float-diya:nth-child(3) {
+            animation-delay: 0.8s;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Screen Flash Overlay for Cracker Burst -->
+    <div id="screenFlash"></div>
+
+    <!-- Floating Audio Mute / Unmute Button -->
+    <button id="audioToggle" aria-label="Toggle Festive Music" title="Toggle Festive Music">
+        <svg id="soundIconOff" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+        <svg id="soundIconOn" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+    </button>
+
+    <!-- Toast Feedback -->
+    <div id="toastMsg">Link copied! Ready to share ✨</div>
+
+    <!-- Fullscreen Canvas for Stars, Rocket Trail & Fireworks -->
+    <canvas id="fireworksCanvas"></canvas>
+
+    <!-- ==========================================
+         SCREEN 1: WELCOME / INTRO
+         ========================================== -->
+    <section id="screen1" class="screen active">
+        <div class="mandala-frame">
+            <!-- Rotating Background Mandala SVG -->
+            <svg class="bg-mandala-svg" viewBox="0 0 200 200" fill="none" stroke="#ffd700" stroke-width="1.2">
+                <circle cx="100" cy="100" r="88" stroke-dasharray="4 4"/>
+                <circle cx="100" cy="100" r="70"/>
+                <circle cx="100" cy="100" r="48"/>
+                <circle cx="100" cy="100" r="24"/>
+                <g>
+                    <ellipse cx="100" cy="100" rx="85" ry="22"/>
+                    <ellipse cx="100" cy="100" rx="85" ry="22" transform="rotate(30 100 100)"/>
+                    <ellipse cx="100" cy="100" rx="85" ry="22" transform="rotate(60 100 100)"/>
+                    <ellipse cx="100" cy="100" rx="85" ry="22" transform="rotate(90 100 100)"/>
+                    <ellipse cx="100" cy="100" rx="85" ry="22" transform="rotate(120 100 100)"/>
+                    <ellipse cx="100" cy="100" rx="85" ry="22" transform="rotate(150 100 100)"/>
+                </g>
+            </svg>
+
+            <!-- Golden Corner Mandala Ornaments -->
+            <svg class="corner-ornament corner-tl" viewBox="0 0 60 60" fill="none" stroke="#ffd700" stroke-width="2">
+                <path d="M2 58 L2 14 Q2 2 14 2 L58 2"/>
+                <path d="M10 46 L10 18 Q10 10 18 10 L46 10" stroke-width="1.2"/>
+                <circle cx="18" cy="18" r="4" fill="#ffd700"/>
+            </svg>
+            <svg class="corner-ornament corner-tr" viewBox="0 0 60 60" fill="none" stroke="#ffd700" stroke-width="2">
+                <path d="M2 58 L2 14 Q2 2 14 2 L58 2"/>
+                <path d="M10 46 L10 18 Q10 10 18 10 L46 10" stroke-width="1.2"/>
+                <circle cx="18" cy="18" r="4" fill="#ffd700"/>
+            </svg>
+            <svg class="corner-ornament corner-bl" viewBox="0 0 60 60" fill="none" stroke="#ffd700" stroke-width="2">
+                <path d="M2 58 L2 14 Q2 2 14 2 L58 2"/>
+                <path d="M10 46 L10 18 Q10 10 18 10 L46 10" stroke-width="1.2"/>
+                <circle cx="18" cy="18" r="4" fill="#ffd700"/>
+            </svg>
+            <svg class="corner-ornament corner-br" viewBox="0 0 60 60" fill="none" stroke="#ffd700" stroke-width="2">
+                <path d="M2 58 L2 14 Q2 2 14 2 L58 2"/>
+                <path d="M10 46 L10 18 Q10 10 18 10 L46 10" stroke-width="1.2"/>
+                <circle cx="18" cy="18" r="4" fill="#ffd700"/>
+            </svg>
+
+            <!-- Twinkling Fairy Lights Left & Right -->
+            <div class="fairy-string left">
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+            </div>
+            <div class="fairy-string right">
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+                <span class="fairy-bulb"></span>
+            </div>
+
+            <!-- Top Decorative Header -->
+            <div style="text-align:center; z-index:6; margin-top: 8px;">
+                <div class="s1-top-badge">✨ Festival of Lights ✨</div>
+                <h1 class="hindi-heading gold-text s1-main-title">शुभ दीपावली</h1>
+            </div>
+
+            <!-- Center Golden Box with Red Border -->
+            <div style="z-index:6; display:flex; flex-direction:column; align-items:center;">
+                <div class="jagmag-box">
+                    <h2>जगमग दिवाली</h2>
+                </div>
+                <p class="s1-subtext">कुछ शुभकामनाएं सिर्फ मैसेज नहीं होती</p>
+            </div>
+
+            <!-- Bottom Glowing Button -->
+            <div style="z-index:6; margin-bottom: 6px;">
+                <button id="btnStart" class="gold-btn">
+                    <span>Tap to Begin</span>
+                    <span>✨</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         SCREEN 2: LIGHT THE DIYA
+         ========================================== -->
+    <section id="screen2" class="screen">
+        <div class="temple-arch-wrapper">
+            <div style="text-align:center; margin-top: 4px;">
+                <div style="font-size:0.75rem; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; opacity:0.8;">Sacred Glow</div>
+                <h2 class="hindi-heading" style="font-size: 2rem;">दीप प्रज्वलन</h2>
+            </div>
+
+            <!-- Arched Temple Frame -->
+            <div class="temple-arch">
+                <div class="temple-kalash">ॐ</div>
+
+                <!-- 3 Diyas (Left small, Middle large, Right small) -->
+                <div class="diyas-row">
+                    <!-- Left Small Diya -->
+                    <div class="diya-unit small" id="diyaLeft" role="button" aria-label="Light left diya">
+                        <div class="flame-wrap">
+                            <div class="diya-flame"></div>
+                        </div>
+                        <svg class="diya-svg" viewBox="0 0 120 65">
+                            <defs>
+                                <linearGradient id="clayGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#d96b27"/>
+                                    <stop offset="50%" stop-color="#a84210"/>
+                                    <stop offset="100%" stop-color="#6e2605"/>
+                                </linearGradient>
+                            </defs>
+                            <ellipse cx="60" cy="22" rx="46" ry="12" fill="#591d02" stroke="#ffd700" stroke-width="2"/>
+                            <path d="M12 22 Q60 72 108 22 Z" fill="url(#clayGrad1)" stroke="#ffd700" stroke-width="2"/>
+                            <path d="M26 36 Q60 56 94 36" fill="none" stroke="#ffd700" stroke-width="2.5" stroke-dasharray="5 4"/>
+                        </svg>
+                    </div>
+
+                    <!-- Middle Main Diya -->
+                    <div class="diya-unit" id="diyaCenter" role="button" aria-label="Light center diya">
+                        <div class="flame-wrap">
+                            <div class="diya-flame"></div>
+                        </div>
+                        <svg class="diya-svg" viewBox="0 0 120 65">
+                            <ellipse cx="60" cy="22" rx="48" ry="13" fill="#591d02" stroke="#ffd700" stroke-width="2.5"/>
+                            <path d="M10 22 Q60 75 110 22 Z" fill="url(#clayGrad1)" stroke="#ffd700" stroke-width="2.5"/>
+                            <path d="M24 37 Q60 58 96 37" fill="none" stroke="#ffd700" stroke-width="3" stroke-dasharray="6 4"/>
+                        </svg>
+                    </div>
+
+                    <!-- Right Small Diya -->
+                    <div class="diya-unit small" id="diyaRight" role="button" aria-label="Light right diya">
+                        <div class="flame-wrap">
+                            <div class="diya-flame"></div>
+                        </div>
+                        <svg class="diya-svg" viewBox="0 0 120 65">
+                            <ellipse cx="60" cy="22" rx="46" ry="12" fill="#591d02" stroke="#ffd700" stroke-width="2"/>
+                            <path d="M12 22 Q60 72 108 22 Z" fill="url(#clayGrad1)" stroke="#ffd700" stroke-width="2"/>
+                            <path d="M26 36 Q60 56 94 36" fill="none" stroke="#ffd700" stroke-width="2.5" stroke-dasharray="5 4"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <p id="diyaPromptText" class="diya-instruction">Tap the diya to light it</p>
+            </div>
+
+            <!-- Next Step Button -->
+            <div style="min-height: 58px; display:flex; align-items:center; justify-content:center;">
+                <button id="nextToSkyBtn" class="gold-btn">
+                    <span>Next: Light the Sky</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         SCREEN 3: BURST THE CRACKER
+         ========================================== -->
+    <section id="screen3" class="screen">
+        <div class="s3-header">
+            <h2 class="hindi-heading gold-text" style="font-size: 2.2rem;">आसमान जगमगाएं</h2>
+            <div id="crackerStatusPill" class="double-tap-pill">Double tap to light it</div>
+        </div>
+
+        <div class="cracker-stage">
+            <div id="rocketCracker" class="rocket-assembly" role="button" aria-label="Double tap rocket cracker to launch">
+                <div class="rocket-missile">
+                    <div class="rocket-cone"></div>
+                    <div class="rocket-body">
+                        <span class="rocket-badge">2026 ✨</span>
+                    </div>
+                    <div class="rocket-fins"></div>
+                    <div class="rocket-fuse">
+                        <div class="fuse-spark"></div>
+                    </div>
+                </div>
+                <div class="launch-bottle"></div>
+            </div>
+        </div>
+
+        <p id="crackerSubHint" class="tap-hint-sub">Double-tap (or tap twice quickly) on the rocket to ignite the fuse!</p>
+    </section>
+
+    <!-- ==========================================
+         SCREEN 4: PERSONALIZED WISH CARD
+         ========================================== -->
+    <section id="screen4" class="screen">
+        <div class="wish-card-container">
+            <div id="goldenWishCard" class="golden-card">
+                <div class="envelope-flap"></div>
+
+                <!-- STATE A: Name Input Form -->
+                <div id="wishFormState">
+                    <div style="text-align:center; margin-bottom: 18px;">
+                        <h2 class="hindi-heading gold-text" style="font-size: 2.3rem;">शुभ दीपावली</h2>
+                        <p style="color:#ffefc2; font-size:0.95rem; margin-top:4px;">Whose name should light up this Diwali?</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="senderNameInput">1. Your Name (Sender)</label>
+                        <input id="senderNameInput" type="text" class="festive-input" placeholder="e.g. Manan" maxlength="36" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="receiverNameInput">2. Receiver's Name</label>
+                        <input id="receiverNameInput" type="text" class="festive-input" placeholder="e.g. Kashish" maxlength="36" autocomplete="off">
+                    </div>
+
+                    <div style="margin-top: 20px; text-align:center;">
+                        <button id="createWishBtn" class="gold-btn" style="width:100%;">
+                            <span>Create My Wish ❤️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STATE B: Final Personalized Wish Card -->
+                <div id="wishFinalState">
+                    <div style="font-size: 2.1rem; margin-top: 6px;">💌 ✨</div>
+                    <h2 id="finalHeadingText" class="hindi-heading gold-text wish-To-Heading">Kashish, शुभ दीपावली</h2>
+                    <div class="gold-divider"></div>
+
+                    <p id="finalBodyText" class="wish-body-text">
+                        Dear Kashish, May your life shine as bright as these diyas. Wishing you joy, health, wealth and endless happiness this Diwali.
+                        <span id="finalSenderText" class="sender-signature">- Manan</span>
+                    </p>
+
+                    <div class="action-buttons-stack">
+                        <button id="shareWhatsappBtn" class="whatsapp-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                            </svg>
+                            <span>Share on WhatsApp</span>
+                        </button>
+
+                        <button id="createAnotherBtn" class="secondary-btn">
+                            Create for Someone Else
+                        </button>
+
+                        <button id="replayExperienceBtn" class="secondary-btn" style="font-size: 0.82rem; opacity: 0.85;">
+                            Replay Full Experience ✨
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Lit Diyas at Bottom -->
+            <div class="bottom-floating-diyas">
+                <span class="mini-float-diya">🪔</span>
+                <span class="mini-float-diya">🪔</span>
+                <span class="mini-float-diya">🪔</span>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        /* =========================================================
+           1. WEB AUDIO API SYNTHESIZER (CHIMES, SPARKS & FIREWORKS)
+           ========================================================= */
+        let audioCtx = null;
+        let soundEnabled = true;
+        let ambientInterval = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function updateAudioUI() {
+            const btn = document.getElementById('audioToggle');
+            const iconOn = document.getElementById('soundIconOn');
+            const iconOff = document.getElementById('soundIconOff');
+            if (soundEnabled && audioCtx && audioCtx.state === 'running') {
+                btn.classList.add('playing');
+                iconOn.style.display = 'block';
+                iconOff.style.display = 'none';
+            } else {
+                btn.classList.remove('playing');
+                iconOn.style.display = 'none';
+                iconOff.style.display = 'block';
+            }
+        }
+
+        // Play warm bell/sitar-like festive chime notes
+        function playFestiveChime(notes = [523.25, 659.25, 783.99, 1046.5], stepDelay = 0.09, duration = 1.1) {
+            if (!soundEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            updateAudioUI();
+
+            const now = ctx.currentTime;
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + idx * stepDelay);
+
+                gain.gain.setValueAtTime(0.0001, now + idx * stepDelay);
+                gain.gain.linearRampToValueAtTime(0.14, now + idx * stepDelay + 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * stepDelay + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start(now + idx * stepDelay);
+                osc.stop(now + idx * stepDelay + duration);
+            });
+        }
+
+        // Play fuse spark fizzle + rocket whoosh
+        function playRocketWhoosh() {
+            if (!soundEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(160, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.75);
+
+            gain.gain.setValueAtTime(0.01, now);
+            gain.gain.linearRampToValueAtTime(0.12, now + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.78);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.8);
+        }
+
+        // Play firework explosion boom + crackle
+        function playFireworkBoom() {
+            if (!soundEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const now = ctx.currentTime;
+            const bufferSize = Math.floor(ctx.sampleRate * 0.9);
+            const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = ctx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(320, now);
+            filter.frequency.exponentialRampToValueAtTime(65, now + 0.85);
+
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.28, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.88);
+
+            whiteNoise.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+
+            whiteNoise.start(now);
+            whiteNoise.stop(now + 0.9);
+        }
+
+        function startAmbientMelody() {
+            if (ambientInterval) return;
+            const ragNotes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+            ambientInterval = setInterval(() => {
+                if (soundEnabled && audioCtx && audioCtx.state === 'running') {
+                    const n1 = ragNotes[Math.floor(Math.random() * ragNotes.length)];
+                    const n2 = ragNotes[Math.floor(Math.random() * ragNotes.length)];
+                    playFestiveChime([n1, n2], 0.25, 1.4);
+                }
+            }, 4200);
+        }
+
+        document.getElementById('audioToggle').addEventListener('click', () => {
+            const ctx = getAudioContext();
+            soundEnabled = !soundEnabled;
+            if (soundEnabled && ctx) {
+                playFestiveChime([523.25, 659.25, 783.99, 1046.5], 0.08, 0.9);
+                startAmbientMelody();
+            }
+            updateAudioUI();
+        });
+
+        /* =========================================================
+           2. HTML5 CANVAS FIREWORKS, STARS & SPARK PARTICLES
+           ========================================================= */
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        let cw = window.innerWidth;
+        let ch = window.innerHeight;
+
+        let activeScreen = 1;
+        let autoFireworks = false;
+        const stars = [];
+        const particles = [];
+        const rockets = [];
+
+        function resizeCanvas() {
+            cw = window.innerWidth;
+            ch = window.innerHeight;
+            canvas.width = cw;
+            canvas.height = ch;
+            initStars();
+        }
+
+        function initStars() {
+            stars.length = 0;
+            const count = Math.min(110, Math.floor((cw * ch) / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * cw,
+                    y: Math.random() * ch,
+                    r: Math.random() * 1.6 + 0.4,
+                    alpha: Math.random(),
+                    delta: (Math.random() * 0.02 + 0.005) * (Math.random() < 0.5 ? 1 : -1)
+                });
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const FIREWORK_PALETTE = [
+            '#FFD700', // Gold
+            '#FF4D94', // Festive Pink
+            '#00E5FF', // Cyan / Blue
+            '#00E676', // Emerald Green
+            '#FF9100', // Warm Amber
+            '#FFF59D'  // Soft Lemon Gold
+        ];
+
+        function spawnSparks(x, y, count = 18) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3.8 + 1;
+                particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color: i % 2 === 0 ? '#FFD700' : '#FF6D00',
+                    alpha: 1,
+                    decay: Math.random() * 0.04 + 0.025,
+                    gravity: 0.08,
+                    size: Math.random() * 2.2 + 1.2
+                });
+            }
+        }
+
+        function triggerBurst(x, y, isGrand = false) {
+            playFireworkBoom();
+            const count = isGrand ? 95 : 65;
+            const primaryColor = FIREWORK_PALETTE[Math.floor(Math.random() * FIREWORK_PALETTE.length)];
+            const secondaryColor = '#FFD700';
+
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.2;
+                const speed = Math.random() * (isGrand ? 7.5 : 5.2) + 1.5;
+                particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    color: i % 3 === 0 ? secondaryColor : primaryColor,
+                    alpha: 1,
+                    decay: Math.random() * 0.014 + 0.009,
+                    gravity: 0.065,
+                    size: Math.random() * 2.6 + 1.4
+                });
+            }
+        }
+
+        function flashScreenEffect() {
+            const flash = document.getElementById('screenFlash');
+            flash.style.opacity = '1';
+            setTimeout(() => {
+                flash.style.opacity = '0';
+            }, 160);
+        }
+
+        function renderCanvasLoop() {
+            ctx.clearRect(0, 0, cw, ch);
+
+            // Render twinkling stars on Night Sky screens (Screen 3 & Screen 4)
+            if (activeScreen === 3 || activeScreen === 4) {
+                for (let i = 0; i < stars.length; i++) {
+                    const s = stars[i];
+                    s.alpha += s.delta;
+                    if (s.alpha >= 1 || s.alpha <= 0.15) s.delta = -s.delta;
+                    ctx.fillStyle = `rgba(255, 248, 220, ${Math.max(0.1, Math.min(1, s.alpha))})`;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Update ascending rockets with golden trails
+            for (let i = rockets.length - 1; i >= 0; i--) {
+                const r = rockets[i];
+                r.x += r.vx;
+                r.y += r.vy;
+
+                // Trail particles
+                particles.push({
+                    x: r.x + (Math.random() - 0.5) * 4,
+                    y: r.y + 6,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: Math.random() * 1.5 + 0.5,
+                    color: '#FFD700',
+                    alpha: 0.9,
+                    decay: 0.045,
+                    gravity: 0.02,
+                    size: 2.2
+                });
+
+                ctx.fillStyle = '#FFF9C4';
+                ctx.beginPath();
+                ctx.arc(r.x, r.y, 3.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (r.y <= r.targetY) {
+                    rockets.splice(i, 1);
+                    triggerBurst(r.x, r.y, r.isGrand);
+                    if (r.isGrand) {
+                        flashScreenEffect();
+                    }
+                }
+            }
+
+            // Update firework & spark particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.vx *= 0.975;
+                p.vy *= 0.975;
+                p.vy += p.gravity;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= p.decay;
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Continuous background fireworks on Screen 4
+            if (autoFireworks && Math.random() < 0.032) {
+                const startX = Math.random() * (cw * 0.76) + cw * 0.12;
+                const targetY = Math.random() * (ch * 0.42) + ch * 0.1;
+                rockets.push({
+                    x: startX,
+                    y: ch,
+                    vx: (Math.random() - 0.5) * 1.2,
+                    vy: -(Math.random() * 3.5 + 8.5),
+                    targetY,
+                    isGrand: false
+                });
+            }
+
+            requestAnimationFrame(renderCanvasLoop);
+        }
+        renderCanvasLoop();
+
+        /* =========================================================
+           3. SCREEN NAVIGATION FLOW (4 SCREENS)
+           ========================================================= */
+        function goToScreen(targetNum) {
+            const currentEl = document.getElementById(`screen${activeScreen}`);
+            const nextEl = document.getElementById(`screen${targetNum}`);
+            if (!nextEl || activeScreen === targetNum) return;
+
+            currentEl.classList.remove('active');
+            currentEl.classList.add('exit');
+
+            setTimeout(() => {
+                currentEl.classList.remove('exit');
+            }, 650);
+
+            nextEl.classList.add('active');
+            activeScreen = targetNum;
+
+            if (targetNum === 4) {
+                autoFireworks = true;
+            } else {
+                autoFireworks = false;
+            }
+        }
+
+        // --- SCREEN 1 -> SCREEN 2 ---
+        document.getElementById('btnStart').addEventListener('click', () => {
+            playFestiveChime([523.25, 659.25, 783.99, 1046.5], 0.08, 1.0);
+            startAmbientMelody();
+            goToScreen(2);
+        });
+
+        // --- SCREEN 2: LIGHT THE DIYA ---
+        let diyaSequenceStarted = false;
+        const screen2El = document.getElementById('screen2');
+        const diyaCenter = document.getElementById('diyaCenter');
+        const diyaLeft = document.getElementById('diyaLeft');
+        const diyaRight = document.getElementById('diyaRight');
+        const diyaPromptText = document.getElementById('diyaPromptText');
+        const nextToSkyBtn = document.getElementById('nextToSkyBtn');
+
+        function resetScreen2() {
+            diyaSequenceStarted = false;
+            screen2El.classList.remove('lit-theme');
+            diyaCenter.classList.remove('lit');
+            diyaLeft.classList.remove('lit');
+            diyaRight.classList.remove('lit');
+            diyaPromptText.textContent = 'Tap the diya to light it';
+            nextToSkyBtn.classList.remove('show');
+        }
+
+        function triggerDiyaLighting() {
+            if (diyaSequenceStarted) return;
+            diyaSequenceStarted = true;
+
+            // 1. Light middle diya & spread warm glow
+            diyaCenter.classList.add('lit');
+            screen2El.classList.add('lit-theme');
+            diyaPromptText.textContent = 'May darkness give way to golden light... ✨';
+            playFestiveChime([587.33, 739.99, 880.0], 0.1, 1.1);
+
+            const centerRect = diyaCenter.getBoundingClientRect();
+            spawnSparks(centerRect.left + centerRect.width / 2, centerRect.top + 18, 22);
+
+            // 2. Automatically light the two smaller side diyas shortly after
+            setTimeout(() => {
+                diyaLeft.classList.add('lit');
+                diyaRight.classList.add('lit');
+                playFestiveChime([659.25, 880.0, 1046.5, 1318.5], 0.09, 1.2);
+
+                const leftRect = diyaLeft.getBoundingClientRect();
+                const rightRect = diyaRight.getBoundingClientRect();
+                spawnSparks(leftRect.left + leftRect.width / 2, leftRect.top + 16, 15);
+                spawnSparks(rightRect.left + rightRect.width / 2, rightRect.top + 16, 15);
+
+                diyaPromptText.textContent = 'All diyas are glowing bright! 🪔';
+                nextToSkyBtn.classList.add('show');
+            }, 650);
+        }
+
+        [diyaCenter, diyaLeft, diyaRight].forEach(el => {
+            el.addEventListener('click', triggerDiyaLighting);
+        });
+
+        nextToSkyBtn.addEventListener('click', () => {
+            playFestiveChime([659.25, 783.99, 1046.5], 0.08, 0.9);
+            goToScreen(3);
+        });
+
+        // --- SCREEN 3: BURST THE CRACKER (DOUBLE TAP) ---
+        const rocketCracker = document.getElementById('rocketCracker');
+        const crackerStatusPill = document.getElementById('crackerStatusPill');
+        const crackerSubHint = document.getElementById('crackerSubHint');
+        let lastTapTime = 0;
+        let tapCounter = 0;
+        let rocketLaunched = false;
+
+        function resetScreen3() {
+            rocketLaunched = false;
+            tapCounter = 0;
+            rocketCracker.classList.remove('shaking', 'launching');
+            crackerStatusPill.textContent = 'Double tap to light it';
+            crackerSubHint.textContent = 'Double-tap (or tap twice quickly) on the rocket to ignite the fuse!';
+        }
+
+        function launchRocketSequence() {
+            if (rocketLaunched) return;
+            rocketLaunched = true;
+
+            crackerStatusPill.textContent = 'Fuse Ignited! Watch the Sky ✨';
+            crackerSubHint.textContent = 'Get ready for the fireworks...';
+            rocketCracker.classList.add('shaking');
+
+            // Fuse sparks flying
+            const fuseRect = rocketCracker.getBoundingClientRect();
+            const fuseX = fuseRect.left + fuseRect.width / 2;
+            const fuseY = fuseRect.top + fuseRect.height * 0.62;
+            spawnSparks(fuseX, fuseY, 30);
+            playFestiveChime([880, 1046.5], 0.06, 0.4);
+
+            // Launch upward after brief shake
+            setTimeout(() => {
+                rocketCracker.classList.remove('shaking');
+                rocketCracker.classList.add('launching');
+                playRocketWhoosh();
+
+                // Canvas trail + multiple colorful bursts
+                rockets.push({
+                    x: cw / 2,
+                    y: fuseY,
+                    vx: 0,
+                    vy: -13.5,
+                    targetY: ch * 0.25,
+                    isGrand: true
+                });
+
+                setTimeout(() => {
+                    triggerBurst(cw * 0.28, ch * 0.34, true);
+                }, 700);
+
+                setTimeout(() => {
+                    triggerBurst(cw * 0.72, ch * 0.30, true);
+                }, 1050);
+
+                setTimeout(() => {
+                    triggerBurst(cw * 0.5, ch * 0.20, true);
+                }, 1400);
+
+                // Automatically transition to Screen 4 after explosion finishes
+                setTimeout(() => {
+                    goToScreen(4);
+                    // Trigger initial celebratory burst on Screen 4
+                    setTimeout(() => {
+                        triggerBurst(cw * 0.5, ch * 0.22, false);
+                    }, 350);
+                }, 2750);
+            }, 550);
+        }
+
+        rocketCracker.addEventListener('click', (e) => {
+            if (rocketLaunched) return;
+            const now = Date.now();
+            const rect = rocketCracker.getBoundingClientRect();
+            spawnSparks(rect.left + rect.width / 2, rect.top + rect.height * 0.6, 12);
+
+            if (now - lastTapTime < 480 || tapCounter >= 1) {
+                launchRocketSequence();
+            } else {
+                tapCounter++;
+                lastTapTime = now;
+                crackerStatusPill.textContent = 'Tap once more to ignite! 🔥';
+                playFestiveChime([659.25], 0, 0.35);
+            }
+        });
+
+        rocketCracker.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            launchRocketSequence();
+        });
+
+        /* =========================================================
+           4. SCREEN 4: PERSONALIZED WISH CARD & URL PARAMS
+           ========================================================= */
+        const senderInput = document.getElementById('senderNameInput');
+        const receiverInput = document.getElementById('receiverNameInput');
+        const createWishBtn = document.getElementById('createWishBtn');
+        const wishFormState = document.getElementById('wishFormState');
+        const wishFinalState = document.getElementById('wishFinalState');
+        const goldenWishCard = document.getElementById('goldenWishCard');
+        const finalHeadingText = document.getElementById('finalHeadingText');
+        const finalBodyText = document.getElementById('finalBodyText');
+        const shareWhatsappBtn = document.getElementById('shareWhatsappBtn');
+        const createAnotherBtn = document.getElementById('createAnotherBtn');
+        const replayExperienceBtn = document.getElementById('replayExperienceBtn');
+
+        let currentSender = '';
+        let currentReceiver = '';
+
+        function showToast(message) {
+            const toast = document.getElementById('toastMsg');
+            toast.textContent = message;
+            toast.classList.add('visible');
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2600);
+        }
+
+        function renderFinalWishCard(senderRaw, receiverRaw) {
+            currentSender = (senderRaw || '').trim() || 'Your Well-Wisher';
+            currentReceiver = (receiverRaw || '').trim() || 'Dear Friend';
+
+            finalHeadingText.textContent = `${currentReceiver}, शुभ दीपावली`;
+            finalBodyText.textContent = `Dear ${currentReceiver}, May your life shine as bright as these diyas. Wishing you joy, health, wealth and endless happiness this Diwali. `;
+
+            const sigSpan = document.createElement('span');
+            sigSpan.className = 'sender-signature';
+            sigSpan.textContent = `- ${currentSender}`;
+            finalBodyText.appendChild(sigSpan);
+
+            wishFormState.classList.add('hidden');
+            wishFinalState.classList.add('active');
+            goldenWishCard.classList.add('envelope-open');
+
+            playFestiveChime([523.25, 659.25, 783.99, 1046.5], 0.09, 1.3);
+            triggerBurst(cw * 0.5, ch * 0.22, true);
+        }
+
+        createWishBtn.addEventListener('click', () => {
+            const s = senderInput.value.trim();
+            const r = receiverInput.value.trim();
+            if (!r && !s) {
+                receiverInput.focus();
+                showToast('Please enter a name to light up this card ✨');
+                return;
+            }
+            renderFinalWishCard(s, r);
+        });
+
+        // Allow Enter key on inputs
+        [senderInput, receiverInput].forEach(inp => {
+            inp.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    createWishBtn.click();
+                }
+            });
+        });
+
+        shareWhatsappBtn.addEventListener('click', () => {
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareLink = `${baseUrl}?to=${encodeURIComponent(currentReceiver)}&from=${encodeURIComponent(currentSender)}`;
+            const shareMessage = `I made something special for you, open it ❤️ ${shareLink}`;
+
+            // Copy to clipboard fallback for convenience
+            try {
+                const tempInput = document.createElement('textarea');
+                tempInput.value = shareMessage;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                showToast('Link copied! Opening WhatsApp... ❤️');
+            } catch (err) {}
+
+            const waUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+            window.open(waUrl, '_blank', 'noopener,noreferrer');
+        });
+
+        createAnotherBtn.addEventListener('click', () => {
+            goldenWishCard.classList.remove('envelope-open');
+            wishFinalState.classList.remove('active');
+            wishFormState.classList.remove('hidden');
+            receiverInput.value = '';
+            receiverInput.focus();
+        });
+
+        replayExperienceBtn.addEventListener('click', () => {
+            resetScreen2();
+            resetScreen3();
+            goToScreen(1);
+        });
+
+        // Check URL parameters (?to=Kashish&from=Manan) on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const toParam = params.get('to');
+            const fromParam = params.get('from');
+
+            if (toParam || fromParam) {
+                senderInput.value = fromParam || '';
+                receiverInput.value = toParam || '';
+                // Directly show Screen 4 with the personalized wish card
+                document.getElementById('screen1').classList.remove('active');
+                document.getElementById('screen4').classList.add('active');
+                activeScreen = 4;
+                autoFireworks = true;
+                renderFinalWishCard(fromParam, toParam);
+            }
+        });
+    </script>
+</body>
+</html>
